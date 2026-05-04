@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <!-- Meta tags para compatibilidade com navegadores -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Árvore Mercadológica</title>
+  
+  <!-- Estilos da aplicação -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Fontes do Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- Botão para alternar tema (claro/escuro) -->
+<div class="controls">
+  <button class="theme-toggle" onclick="toggleTheme()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="5"/>
+      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+    </svg>
+    Light / Dark
+  </button>
+</div>
+
+<div class="demo-wrapper">
+
+<!-- SIDEBAR: Contém a lista de departamentos carregados da API -->
+<div class="sidebar">
+  <!-- Cabeçalho da sidebar com título e botão de adicionar -->
+  <div class="sidebar-header">
+    <div class="sidebar-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+      </svg>
+      Departamentos
+    </div>
+    <!-- Botão '+' para abrir modal de novo departamento -->
+    <button class="btn-add-main" title="Novo departamento">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </div>
+  <!-- Container vazio que será preenchido dinamicamente via JavaScript com dados da API -->
+  <div id="departmentsContainer" class="departments"></div>
+</div>
+<!--FIM DA SIDEBAR -->
+
+<!-- MODAL: Jan de diálogo para cadastro de novo departamento -->
+<!-- O modal é ocultado por padrão e acionado pelo botão '+' -->
+<div id="departmentModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Novo Departamento</h2>
+      <!-- Botão para fechar o modal -->
+      <button class="modal-close" onclick="closeDepartmentModal()">&times;</button>
+    </div>
+    <!-- Formulário para criar novo departamento -->
+    <!-- O ícone é detectado automaticamente baseado no nome do departamento -->
+    <form id="departmentForm" onsubmit="saveDepartment(event)">
+      <div class="form-group">
+        <label for="deptName">Nome</label>
+        <input type="text" id="deptName" name="name" required placeholder="Ex: Eletrônicos">
+      </div>
+      
+      <div class="form-group">
+        <label for="deptDescription">Descrição</label>
+        <textarea id="deptDescription" name="description" placeholder="Ex: Produtos eletrônicos em geral"></textarea>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" onclick="closeDepartmentModal()">Cancelar</button>
+        <button type="submit" class="btn-submit">Cadastrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+</div>
+<!-- Carrega o script principal da aplicação -->
+<script src="script.js"></script>
+</body>
+</html>
