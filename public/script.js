@@ -120,20 +120,27 @@ function closeDepartmentModal() {
 function saveDepartment(event) {
   event.preventDefault();
   
-  const name = document.getElementById('deptName').value.trim();
+  const name = document.getElementById('deptName').value;
   const description = document.getElementById('deptDescription').value.trim();
-  
-  if (!name) {
-    alert('Por favor, insira o nome do departamento.');
+
+  // Limpar erros anteriores
+  clearNameError();
+
+  // Normalizar espaços extras e validar comprimento mínimo (RN-02)
+  const normalizedForLength = name.replace(/\s+/g, ' ').trim();
+  if (normalizedForLength.length < 4) {
+    setNameError('O nome deve possuir pelo menos 4 caracteres');
     return;
   }
+
+  const trimmedName = normalizedForLength; // nome final a ser enviado
   
   // Detectar automaticamente o ícone baseado no nome
-  const icon = detectIconFromName(name);
+  const icon = detectIconFromName(trimmedName);
   
   // Enviar dados para a API
   const dados = {
-    nome: name,
+    nome: trimmedName,
     descricao: description,
     icone: icon
   };
@@ -145,25 +152,70 @@ function saveDepartment(event) {
     },
     body: JSON.stringify(dados)
   })
-  .then(response => response.json())
-  .then(data => {
-    if (data.sucesso) {
-      // Fechar o modal
-      closeDepartmentModal();
-      
-      // Mostrar mensagem de sucesso
-      alert(`Departamento "${name}" cadastrado com sucesso!`);
-      
-      // Recarregar a lista de departamentos
-      carregarDepartamentos();
-    } else {
-      alert('Erro: ' + (data.erro || 'Erro ao cadastrar departamento'));
+  .then(async response => {
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      // RN-01 duplicidade ou RN-02 validação do backend devem mostrar mensagem abaixo do campo Nome
+      if (response.status === 409 || response.status === 400) {
+        const errMsg = body.erro || 'Erro no nome informado';
+        setNameError(errMsg);
+        return;
+      }
+
+      // Erro genérico: mostrar toast
+      showToast(body.erro || 'Erro ao cadastrar departamento', 'error');
+      return;
     }
+
+    // Sucesso: mostra toast centralizado e fecha modal
+    closeDepartmentModal();
+    showToast(`Departamento "${trimmedName}" cadastrado com sucesso!`, 'success', { center: true });
+    carregarDepartamentos();
   })
   .catch(err => {
     console.error('Erro ao cadastrar departamento:', err);
-    alert('Erro ao cadastrar departamento. Verifique se o servidor está rodando.');
+    showToast('Erro ao cadastrar departamento. Verifique se o servidor está rodando.', 'error');
   });
+}
+
+// ======= Mensagens UI helpers =======
+function setNameError(message) {
+  const el = document.getElementById('deptNameError');
+  if (el) el.textContent = message;
+}
+
+function clearNameError() {
+  const el = document.getElementById('deptNameError');
+  if (el) el.textContent = '';
+}
+
+function showToast(message, type = 'success', opts = {}) {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `
+    <div class="toast-body">${message}</div>
+    <button class="toast-close" aria-label="Fechar">&times;</button>
+  `;
+
+  // Se solicitada centralização, aplica classe que posiciona o toast no centro da tela
+  if (opts.center) {
+    toast.classList.add('toast-center');
+  }
+
+  const closeBtn = toast.querySelector('.toast-close');
+  closeBtn.addEventListener('click', () => {
+    toast.remove();
+  });
+
+  container.appendChild(toast);
+
+  // Auto remover após 5s
+  setTimeout(() => {
+    toast.remove();
+  }, 5000);
 }
 
 // ========== EVENTO DE CARREGAMENTO ==========

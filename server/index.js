@@ -9,6 +9,7 @@
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -19,6 +20,9 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 // JSON Parser: Converte corpo das requisições em JSON
 app.use(express.json());
+
+// Servir arquivos estáticos da pasta public
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // ========== ROTAS ==========
 // API de departamentos: cadastro, leitura, atualização e deleção
@@ -31,5 +35,10 @@ app.get('/api/health', (req, res) => {
 
 // ========== INICIALIZAÇÃO ==========
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`Servidor rodando na porta ${PORT} — http://localhost:${PORT}/`);
+});
+
+// Se a raiz for acessada diretamente, enviar o index.html (útil para desenvolvimento)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });

@@ -25,6 +25,24 @@ class DepartamentoController {
         return res.status(400).json({ erro: 'Nome é obrigatório' });
       }
 
+      // RN-02: Validação de extensão mínima (ao menos 4 caracteres)
+      const normalizedForLength = nome.replace(/\s+/g, ' ').trim();
+      if (normalizedForLength.length < 4) {
+        return res.status(400).json({ erro: 'O nome deve possuir pelo menos 4 caracteres' });
+      }
+
+      // RN-01: Unicidade global de nome (ignora case e espaços)
+      // Normaliza removendo todos os espaços e transformando em minúsculas para comparação
+      const compareKey = nome.replace(/\s+/g, '').toLowerCase();
+      const [existing] = await pool.query(
+        'SELECT id FROM categoria_no WHERE LOWER(REPLACE(nome, " ", "")) = ? LIMIT 1',
+        [compareKey]
+      );
+
+      if (existing && existing.length > 0) {
+        return res.status(409).json({ erro: 'Nome já existe (deve ser único na árvore)' });
+      }
+
       // Insert no banco: adiciona novo departamento root (id_pai IS NULL)
       const [result] = await pool.query(
         'INSERT INTO categoria_no (nome, descricao, icone) VALUES (?, ?, ?)',
@@ -98,6 +116,23 @@ class DepartamentoController {
       // Validação: nome é obrigatório
       if (!nome) {
         return res.status(400).json({ erro: 'Nome é obrigatório' });
+      }
+
+      // RN-02: Validação de extensão mínima (ao menos 4 caracteres)
+      const normalizedForLength = nome.replace(/\s+/g, ' ').trim();
+      if (normalizedForLength.length < 4) {
+        return res.status(400).json({ erro: 'O nome deve possuir pelo menos 4 caracteres' });
+      }
+
+      // RN-01: Verificar unicidade global de nome, excluindo o próprio registro (ao editar)
+      const compareKey = nome.replace(/\s+/g, '').toLowerCase();
+      const [existing] = await pool.query(
+        'SELECT id FROM categoria_no WHERE LOWER(REPLACE(nome, " ", "")) = ? AND id != ? LIMIT 1',
+        [compareKey, id]
+      );
+
+      if (existing && existing.length > 0) {
+        return res.status(409).json({ erro: 'Nome já existe (deve ser único na árvore)' });
       }
 
       // Update: modifica registro existente

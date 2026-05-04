@@ -483,6 +483,17 @@
     padding: 8px;
   }
 
+  /* Mensagem de erro específica para campos (inline) */
+  .field-error {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #c0392b; /* vermelho suave */
+    background: rgba(192, 57, 43, 0.04);
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(192,57,43,0.08);
+  }
+
   .modal-footer {
     display: flex;
     gap: 12px;
@@ -562,4 +573,59 @@
     font-family: 'Sora', sans-serif;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+  }
+
+  /* Toast notifications */
+  .toast-container {
+    position: fixed;
+    top: 22px;
+    right: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 2000;
+    pointer-events: none;
+  }
+
+  .toast {
+    pointer-events: auto;
+    min-width: 260px;
+    max-width: 360px;
+    background: var(--surface);
+    color: var(--text-primary);
+    padding: 12px 14px;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    animation: slideIn 240ms var(--transition);
+    font-size: 13px;
+  }
+
+  .toast-success { border-left: 4px solid var(--accent); }
+  .toast-error { border-left: 4px solid #c0392b; }
+
+  .toast .toast-close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+  }
+
+  /* Toast centralizado (usado para confirmações importantes) */
+  .toast-center {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    right: auto !important;
+    z-index: 2500;
+    min-width: 320px;
+    max-width: 640px;
+    text-align: center;
   }
