@@ -85,6 +85,31 @@
 <!-- Carrega o script principal da aplicação -->
 <!-- Container para toasts/avisos rápidos (mensagens de sucesso/erro globais) -->
 <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+<!-- Modal para criação/adição de categoria (subcategoria) -->
+<div id="categoryModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Nova Categoria</h2>
+      <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
+    </div>
+    <form id="categoryForm" onsubmit="saveCategory(event)">
+      <input type="hidden" id="catParentId" name="id_pai" />
+      <div class="form-group">
+        <label for="catName">Nome</label>
+        <input type="text" id="catName" name="nome" required placeholder="Ex: Smartphones">
+        <div id="catNameError" class="field-error" aria-live="polite"></div>
+      </div>
+      <div class="form-group">
+        <label for="catDescription">Descrição</label>
+        <textarea id="catDescription" name="descricao" placeholder="Ex: Telefones e acessórios"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" onclick="closeCategoryModal()">Cancelar</button>
+        <button type="submit" class="btn-submit">Adicionar</button>
+      </div>
+    </form>
+  </div>
+</div>
 <script src="script.js"></script>
 </body>
 </html>

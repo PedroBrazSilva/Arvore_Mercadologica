@@ -25,8 +25,8 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // ========== ROTAS ==========
-// API de departamentos: cadastro, leitura, atualização e deleção
-app.use('/api/departamentos', require('./routes/departamentos'));
+// API unificada: todas as rotas de departamentos e categorias
+app.use('/api', require('./routes'));
 
 // Rota de verificação de saúde do servidor
 app.get('/api/health', (req, res) => {

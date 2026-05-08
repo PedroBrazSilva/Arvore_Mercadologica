@@ -339,9 +339,49 @@
   .sub-actions { opacity: 0; transition: opacity var(--transition); }
   .sub-item:hover .sub-actions { opacity: 1; }
 
+  /* NESTED SUBCATEGORIES (hierarchical) */
+  .cat-subgroup {
+    margin-left: 20px;
+    margin-bottom: 2px;
+  }
+
+  .cat-subitem {
+    display: flex;
+    align-items: center;
+    padding: 0 12px 0 14px;
+    height: 36px;
+    cursor: pointer;
+    border-radius: 8px;
+    margin: 1px 8px;
+    transition: all var(--transition);
+    position: relative;
+    user-select: none;
+    background: rgba(193, 123, 46, 0.02);
+  }
+
+  .cat-subitem:hover { background: rgba(193, 123, 46, 0.06); }
+
+  .cat-subitem.active {
+    background: var(--active-bg);
+    box-shadow:
+      inset 2px 2px 5px var(--shadow-dark),
+      inset -1px -1px 4px var(--shadow-light);
+  }
+
+  .cat-subitem.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    background: var(--accent);
+    border-radius: 0 3px 3px 0;
+  }
+
   /* MODAL STYLES */
   .modal {
-    display: none;
     position: fixed;
     z-index: 1000;
     left: 0;
@@ -349,18 +389,17 @@
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    animation: fadeIn 200ms var(--transition);
-  }
-
-  .modal.show {
     display: flex;
     justify-content: center;
     align-items: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--transition), pointer-events var(--transition);
   }
 
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  .modal.show {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   @keyframes slideIn {
@@ -494,6 +533,13 @@
     border: 1px solid rgba(192,57,43,0.08);
   }
 
+  /* Ocultar mensagem de erro quando vazia */
+  .field-error:empty {
+    display: none;
+    margin: 0;
+    padding: 0;
+  }
+
   .modal-footer {
     display: flex;
     gap: 12px;
@@ -622,10 +668,16 @@
     position: fixed !important;
     top: 50% !important;
     left: 50% !important;
-    transform: translate(-50%, -50%) !important;
+    bottom: auto !important;
     right: auto !important;
-    z-index: 2500;
+    transform: translate(-50%, -50%) !important;
+    z-index: 2500 !important;
+    width: auto;
     min-width: 320px;
     max-width: 640px;
     text-align: center;
+    margin: 0 !important;
+    padding: 16px 20px !important;
+    animation: none !important;
+    box-sizing: border-box !important;
   }
