@@ -110,6 +110,87 @@
     </form>
   </div>
 </div>
+
+<!-- MODAL: Edição de Departamento -->
+<div id="editDepartmentModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Editar Departamento</h2>
+      <button class="modal-close" onclick="closeEditDepartmentModal()">&times;</button>
+    </div>
+    <form id="editDepartmentForm" onsubmit="saveEditDepartment(event)">
+      <input type="hidden" id="editDeptId" name="id" />
+      
+      <div class="form-group">
+        <label for="editDeptName">Nome</label>
+        <input type="text" id="editDeptName" name="nome" required>
+        <div id="editDeptNameError" class="field-error" aria-live="polite"></div>
+      </div>
+      
+      <div class="form-group">
+        <label for="editDeptDescription">Descrição</label>
+        <textarea id="editDeptDescription" name="descricao"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="editDeptIcons">Ícones</label>
+        <select id="editDeptIcons" name="icone"></select>
+      </div>
+
+      <div class="form-group">
+        <label for="editDeptStatus">Status</label>
+        <select id="editDeptStatus" name="ativo">
+          <option value="1">Ativo</option>
+          <option value="0">Desativo</option>
+        </select>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" onclick="closeEditDepartmentModal()">Cancelar</button>
+        <button type="submit" class="btn-submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Edição de Categoria -->
+<div id="editCategoryModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Editar Categoria</h2>
+      <button class="modal-close" onclick="closeEditCategoryModal()">&times;</button>
+    </div>
+    <form id="editCategoryForm" onsubmit="saveEditCategory(event)">
+      <input type="hidden" id="editCatId" name="id" />
+      <input type="hidden" id="editCatParentId" name="id_pai" />
+      
+      <div class="form-group">
+        <label for="editCatName">Nome</label>
+        <input type="text" id="editCatName" name="nome" required>
+        <div id="editCatNameError" class="field-error" aria-live="polite"></div>
+      </div>
+      
+      <div class="form-group">
+        <label for="editCatDescription">Descrição</label>
+        <textarea id="editCatDescription" name="descricao"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="editCatStatus">Status</label>
+        <select id="editCatStatus" name="ativo">
+          <option value="1">Ativo</option>
+          <option value="0">Desativo</option>
+        </select>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" onclick="closeEditCategoryModal()">Cancelar</button>
+        <button type="submit" class="btn-submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script src="script.js"></script>
 </body>
 </html>

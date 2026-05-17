@@ -296,6 +296,425 @@ function showToast(message, type = 'success', opts = {}) {
   }, 5000);
 }
 
+// ========== CONTEXT MENU / DROPDOWN MENU ==========
+/**
+ * Cria e exibe um menu de contexto com opções
+ * @param {Event} event - Evento do clique
+ * @param {number} itemId - ID do item (departamento ou categoria)
+ * @param {string} itemType - Tipo do item ('departamento' ou 'categoria')
+ */
+function showContextMenu(event, itemId, itemType) {
+  event.stopPropagation();
+  
+  // Remover menu anterior, se existir
+  const existingMenu = document.querySelector('.context-menu');
+  if (existingMenu) {
+    existingMenu.remove();
+  }
+  
+  // Criar novo menu
+  const menu = document.createElement('div');
+  menu.className = 'context-menu show';
+  menu.innerHTML = `
+    <button class="context-menu-item edit" data-id="${itemId}" data-type="${itemType}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+      </svg>
+      Editar
+    </button>
+    <button class="context-menu-item delete" data-id="${itemId}" data-type="${itemType}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        <line x1="10" y1="11" x2="10" y2="17"/>
+        <line x1="14" y1="11" x2="14" y2="17"/>
+      </svg>
+      Excluir
+    </button>
+  `;
+  
+  // Posicionar o menu
+  document.body.appendChild(menu);
+  
+  const rect = event.target.getBoundingClientRect();
+  menu.style.top = (rect.bottom + 4) + 'px';
+  menu.style.left = (rect.right - 140) + 'px';
+  
+  // Adicionar eventos aos itens do menu
+  menu.querySelector('.edit').addEventListener('click', () => {
+    handleEditItem(itemId, itemType);
+    menu.remove();
+  });
+  
+  menu.querySelector('.delete').addEventListener('click', () => {
+    handleDeleteItem(itemId, itemType);
+    menu.remove();
+  });
+}
+
+/**
+ * Fecha o menu de contexto
+ */
+function closeContextMenu() {
+  const menu = document.querySelector('.context-menu');
+  if (menu) {
+    menu.classList.remove('show');
+    setTimeout(() => menu.remove(), 200);
+  }
+}
+
+/**
+ * Manipula a ação de editar um item
+ */
+function handleEditItem(itemId, itemType) {
+  if (itemType === 'departamento') {
+    openEditDepartmentModal(itemId);
+  } else if (itemType === 'categoria') {
+    openEditCategoryModal(itemId);
+  }
+}
+
+/**
+ * Carrega dados do departamento e abre modal de edição
+ */
+async function openEditDepartmentModal(id) {
+  try {
+    const response = await fetch(`http://localhost:3000/api/departamentos/${id}`);
+    if (!response.ok) {
+      showToast('Erro ao carregar departamento', 'error');
+      return;
+    }
+
+    const data = await response.json();
+    if (!data.sucesso) {
+      showToast('Erro ao carregar departamento', 'error');
+      return;
+    }
+
+    const dept = data.dados;
+
+    // Preencher formulário
+    document.getElementById('editDeptId').value = dept.id;
+    document.getElementById('editDeptName').value = dept.nome;
+    document.getElementById('editDeptDescription').value = dept.descricao || '';
+    document.getElementById('editDeptStatus').value = dept.ativo ? '1' : '0';
+
+    // Preencher select de ícones
+    populateIconSelect('editDeptIcons', dept.icone);
+
+    // Limpar erros
+    clearEditDeptNameError();
+
+    // Abrir modal
+    document.getElementById('editDepartmentModal').classList.add('show');
+    setTimeout(() => {
+      document.getElementById('editDeptName').focus();
+    }, 100);
+  } catch (err) {
+    console.error('Erro ao abrir modal de edição de departamento:', err);
+    showToast('Erro ao carregar departamento', 'error');
+  }
+}
+
+/**
+ * Carrega dados da categoria e abre modal de edição
+ */
+async function openEditCategoryModal(id) {
+  try {
+    const response = await fetch(`http://localhost:3000/api/categorias/${id}`);
+    if (!response.ok) {
+      showToast('Erro ao carregar categoria', 'error');
+      return;
+    }
+
+    const data = await response.json();
+    if (!data.sucesso) {
+      showToast('Erro ao carregar categoria', 'error');
+      return;
+    }
+
+    const cat = data.dados;
+
+    // Preencher formulário
+    document.getElementById('editCatId').value = cat.id;
+    document.getElementById('editCatParentId').value = cat.id_pai || '';
+    document.getElementById('editCatName').value = cat.nome;
+    document.getElementById('editCatDescription').value = cat.descricao || '';
+    document.getElementById('editCatStatus').value = cat.ativo ? '1' : '0';
+
+    // Limpar erros
+    clearEditCatNameError();
+
+    // Abrir modal
+    document.getElementById('editCategoryModal').classList.add('show');
+    setTimeout(() => {
+      document.getElementById('editCatName').focus();
+    }, 100);
+  } catch (err) {
+    console.error('Erro ao abrir modal de edição de categoria:', err);
+    showToast('Erro ao carregar categoria', 'error');
+  }
+}
+
+/**
+ * Fecha modal de edição de departamento
+ */
+function closeEditDepartmentModal() {
+  const modal = document.getElementById('editDepartmentModal');
+  if (modal) {
+    modal.classList.remove('show');
+  }
+  document.getElementById('editDepartmentForm').reset();
+  clearEditDeptNameError();
+}
+
+/**
+ * Fecha modal de edição de categoria
+ */
+function closeEditCategoryModal() {
+  const modal = document.getElementById('editCategoryModal');
+  if (modal) {
+    modal.classList.remove('show');
+  }
+  document.getElementById('editCategoryForm').reset();
+  clearEditCatNameError();
+}
+
+/**
+ * Preenche o select de ícones
+ */
+function populateIconSelect(selectId, selectedIcon = '') {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+
+  // Limpar opções existentes
+  select.innerHTML = '';
+
+  // Adicionar opção padrão
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = 'Selecione um ícone';
+  select.appendChild(defaultOption);
+
+  // Adicionar todos os ícones disponíveis
+  availableIcons.forEach(icon => {
+    const option = document.createElement('option');
+    option.value = icon;
+    option.textContent = `${icon} ${getIconName(icon)}`;
+    select.appendChild(option);
+  });
+
+  // Selecionar ícone atual
+  if (selectedIcon) {
+    select.value = selectedIcon;
+  }
+}
+
+/**
+ * Retorna um nome descritivo para o ícone
+ */
+function getIconName(icon) {
+  const names = {
+    '🖥️': 'Computador',
+    '📱': 'Celular',
+    '💻': 'Notebook',
+    '📺': 'TV',
+    '🏠': 'Casa',
+    '🛋️': 'Móvel',
+    '🍽️': 'Cozinha',
+    '🌿': 'Jardim',
+    '🍎': 'Alimento',
+    '🍔': 'Comida',
+    '🥤': 'Bebida',
+    '☕': 'Café',
+    '👗': 'Roupa',
+    '👕': 'Camiseta',
+    '👟': 'Sapato',
+    '💄': 'Beleza',
+    '💅': 'Manicure',
+    '💊': 'Farmácia',
+    '🐾': 'Pet',
+    '🐶': 'Cachorro',
+    '🐱': 'Gato',
+    '🏀': 'Esporte',
+    '🏋️': 'Fitness',
+    '🚗': 'Carro',
+    '🔧': 'Ferramenta',
+    '🛠️': 'Construção',
+    '🎮': 'Jogo',
+    '📚': 'Livro',
+    '🎵': 'Música',
+    '🎬': 'Filme',
+    '🗂️': 'Escritório',
+    '✏️': 'Papelaria',
+    '✈️': 'Viagem',
+    '🚲': 'Bicicleta',
+    '🎁': 'Presente',
+    '🎉': 'Festa',
+    '🔒': 'Segurança',
+    '💳': 'Financeiro',
+    '🔌': 'Tecnologia',
+    '🩺': 'Saúde'
+  };
+  return names[icon] || icon;
+}
+
+/**
+ * Salva edição de departamento
+ */
+function saveEditDepartment(event) {
+  event.preventDefault();
+
+  const id = document.getElementById('editDeptId').value;
+  const nome = document.getElementById('editDeptName').value;
+  const descricao = document.getElementById('editDeptDescription').value.trim();
+  const icone = document.getElementById('editDeptIcons').value;
+  const ativo = parseInt(document.getElementById('editDeptStatus').value, 10);
+
+  // Limpar erros
+  clearEditDeptNameError();
+
+  // Validar
+  const normalizedForLength = nome.replace(/\s+/g, ' ').trim();
+  if (normalizedForLength.length < 4) {
+    setEditDeptNameError('O nome deve possuir pelo menos 4 caracteres');
+    return;
+  }
+
+  const dados = {
+    nome: normalizedForLength,
+    descricao: descricao,
+    icone: icone,
+    ativo: ativo === 1
+  };
+
+  fetch(`http://localhost:3000/api/departamentos/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dados)
+  })
+  .then(async response => {
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (response.status === 409 || response.status === 400) {
+        const errMsg = body.erro || 'Erro ao atualizar';
+        setEditDeptNameError(errMsg);
+        return;
+      }
+      showToast(body.erro || 'Erro ao atualizar departamento', 'error');
+      return;
+    }
+
+    closeEditDepartmentModal();
+    showToast('Departamento atualizado com sucesso!', 'success', { center: true });
+    carregarDepartamentos();
+  })
+  .catch(err => {
+    console.error('Erro ao atualizar departamento:', err);
+    showToast('Erro ao atualizar departamento', 'error');
+  });
+}
+
+/**
+ * Salva edição de categoria
+ */
+function saveEditCategory(event) {
+  event.preventDefault();
+
+  const id = document.getElementById('editCatId').value;
+  const nome = document.getElementById('editCatName').value;
+  const descricao = document.getElementById('editCatDescription').value.trim();
+  const id_pai = document.getElementById('editCatParentId').value;
+  const ativo = parseInt(document.getElementById('editCatStatus').value, 10);
+
+  // Limpar erros
+  clearEditCatNameError();
+
+  // Validar
+  const normalizedForLength = nome.replace(/\s+/g, ' ').trim();
+  if (normalizedForLength.length < 4) {
+    setEditCatNameError('O nome deve possuir pelo menos 4 caracteres');
+    return;
+  }
+
+  const dados = {
+    nome: normalizedForLength,
+    descricao: descricao,
+    ativo: ativo === 1
+  };
+
+  fetch(`http://localhost:3000/api/categorias/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dados)
+  })
+  .then(async response => {
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (response.status === 409 || response.status === 400) {
+        const errMsg = body.erro || 'Erro ao atualizar';
+        setEditCatNameError(errMsg);
+        return;
+      }
+      showToast(body.erro || 'Erro ao atualizar categoria', 'error');
+      return;
+    }
+
+    closeEditCategoryModal();
+    showToast('Categoria atualizada com sucesso!', 'success', { center: true });
+    
+    // Recarregar departamentos
+    carregarDepartamentos();
+  })
+  .catch(err => {
+    console.error('Erro ao atualizar categoria:', err);
+    showToast('Erro ao atualizar categoria', 'error');
+  });
+}
+
+/**
+ * Define mensagem de erro no campo nome (edição de departamento)
+ */
+function setEditDeptNameError(message) {
+  const el = document.getElementById('editDeptNameError');
+  if (el) el.textContent = message;
+}
+
+/**
+ * Limpa mensagem de erro no campo nome (edição de departamento)
+ */
+function clearEditDeptNameError() {
+  const el = document.getElementById('editDeptNameError');
+  if (el) el.textContent = '';
+}
+
+/**
+ * Define mensagem de erro no campo nome (edição de categoria)
+ */
+function setEditCatNameError(message) {
+  const el = document.getElementById('editCatNameError');
+  if (el) el.textContent = message;
+}
+
+/**
+ * Limpa mensagem de erro no campo nome (edição de categoria)
+ */
+function clearEditCatNameError() {
+  const el = document.getElementById('editCatNameError');
+  if (el) el.textContent = '';
+}
+
+/**
+ * Manipula a ação de excluir um item
+ */
+function handleDeleteItem(itemId, itemType) {
+  if (confirm(`Tem certeza que deseja excluir este ${itemType}?`)) {
+    showToast(`${itemType} excluído com sucesso!`, 'success');
+    // TODO: Implementar deleção via API
+  }
+}
+
 // ========== EVENTO DE CARREGAMENTO ==========
 /**
  * Executado quando a página carrega
@@ -304,6 +723,9 @@ function showToast(message, type = 'success', opts = {}) {
  * 3. Carrega departamentos da API
  */
 document.addEventListener('DOMContentLoaded', () => {
+  // Fechar menu de contexto ao clicar fora
+  document.addEventListener('click', closeContextMenu);
+  
   // Vincular clique no botão '+' para abrir modal
   const btnAddMain = document.querySelector('.btn-add-main');
   if (btnAddMain) {
@@ -326,6 +748,26 @@ document.addEventListener('DOMContentLoaded', () => {
     catModal.addEventListener('click', (e) => {
       if (e.target === catModal) {
         closeCategoryModal();
+      }
+    });
+  }
+
+  // Fechar modal de edição de departamento ao clicar fora
+  const editDeptModal = document.getElementById('editDepartmentModal');
+  if (editDeptModal) {
+    editDeptModal.addEventListener('click', (e) => {
+      if (e.target === editDeptModal) {
+        closeEditDepartmentModal();
+      }
+    });
+  }
+
+  // Fechar modal de edição de categoria ao clicar fora
+  const editCatModal = document.getElementById('editCategoryModal');
+  if (editCatModal) {
+    editCatModal.addEventListener('click', (e) => {
+      if (e.target === editCatModal) {
+        closeEditCategoryModal();
       }
     });
   }
@@ -444,7 +886,22 @@ function criarElementoDepartamento(departamento) {
   // Container de ações
   const actions = document.createElement('div');
   actions.className = 'cat-actions';
-  // TODO: Adicionar botões de editar/deletar se necessário
+  
+  // Botão de editar
+  const editBtn = document.createElement('button');
+  editBtn.className = 'action-btn';
+  editBtn.title = 'Editar';
+  editBtn.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </svg>
+  `;
+  editBtn.addEventListener('click', (e) => {
+    showContextMenu(e, departamento.id, 'departamento');
+  });
+  
+  actions.appendChild(editBtn);
   
   // Montar o item do departamento
   item.appendChild(chevron);
@@ -550,6 +1007,31 @@ function exibirCategorias(categorias, subList, chevron) {
 }
 
 /**
+ * Fecha todas as categorias irmãs (do mesmo nível) que estão abertas
+ * Mantém apenas a categoria atual aberta
+ */
+function fecharTodasCategorias(grupoAtual) {
+  // Encontrar o container pai (sub-list que contém as categorias irmãs)
+  const containerPai = grupoAtual.parentElement;
+  if (!containerPai || !containerPai.classList.contains('sub-list')) return;
+  
+  // Encontrar todos os grupos de categorias irmãs com chevron aberto
+  const gruposAbertos = containerPai.querySelectorAll('.cat-subgroup .chevron.open');
+  gruposAbertos.forEach(chevronAberto => {
+    // Pular o chevron do grupo atual
+    const grupo = chevronAberto.closest('.cat-subgroup');
+    if (grupo === grupoAtual) return;
+    
+    // Fechar o chevron
+    chevronAberto.classList.remove('open');
+    
+    // Fechar a sub-lista correspondente
+    const subList = grupo.querySelector('.sub-list');
+    if (subList) subList.classList.remove('open');
+  });
+}
+
+/**
  * Cria um elemento de categoria filha
  * 
  * @param {Object} categoria - Dados da categoria
@@ -584,6 +1066,23 @@ function criarElementoCategoria(categoria) {
   const actions = document.createElement('div');
   actions.className = 'cat-actions';
   
+  // Botão de editar
+  const editBtn = document.createElement('button');
+  editBtn.className = 'action-btn';
+  editBtn.title = 'Editar';
+  editBtn.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </svg>
+  `;
+  editBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showContextMenu(e, categoria.id, 'categoria');
+  });
+  
+  actions.appendChild(editBtn);
+  
   // Montar o item da categoria
   item.appendChild(chevron);
   item.appendChild(label);
@@ -595,10 +1094,14 @@ function criarElementoCategoria(categoria) {
   subList.id = `sublist-${categoria.id}`;
   
   // Adicionar evento de clique para expandir/recolher
-  item.addEventListener('click', () => {
+  item.addEventListener('click', (e) => {
+    e.stopPropagation();
     const isOpen = chevron.classList.contains('open');
     
     if (!isOpen) {
+      // Fechar todas as categorias irmãs abertas
+      fecharTodasCategorias(grupo);
+      
       // Carregar subcategorias se não estiverem carregadas
       carregarCategorias(categoria.id, subList, chevron);
     } else {
@@ -658,9 +1161,7 @@ function saveCategory(event) {
     return;
   }
 
-  const icon = detectIconFromName(normalizedForLength);
-
-  const dados = { nome: normalizedForLength, descricao: description.trim(), icone: icon, id_pai };
+  const dados = { nome: normalizedForLength, descricao: description.trim(), id_pai };
 
   fetch('http://localhost:3000/api/categorias', {
     method: 'POST',
@@ -684,7 +1185,7 @@ function saveCategory(event) {
 
     // Recarregar as categorias do pai recém-criado
     const subList = document.getElementById(`sublist-${id_pai}`);
-    const chevron = document.querySelector(`#dept-${id_pai} .chevron`);
+    const chevron = document.querySelector(`#catgroup-${id_pai} .chevron, #dept-${id_pai} .chevron`);
     if (subList) {
       carregarCategorias(id_pai, subList, chevron);
     } else {
