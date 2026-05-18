@@ -384,6 +384,22 @@
     border-radius: 0 3px 3px 0;
   }
 
+  /* INACTIVE/DISABLED ITEMS */
+  .cat-item.inactive .cat-label,
+  .cat-subitem.inactive .cat-label {
+    text-decoration: line-through;
+    opacity: 0.6;
+    color: var(--text-muted);
+  }
+
+  .cat-item.inactive .cat-icon,
+  .cat-subitem.inactive .cat-icon {
+    opacity: 0.5;
+  }
+
+  .cat-item.inactive:hover { background: var(--hover-bg); }
+  .cat-subitem.inactive:hover { background: rgba(193, 123, 46, 0.02); }
+
   /* MODAL STYLES */
   .modal {
     position: fixed;

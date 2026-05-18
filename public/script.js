@@ -513,49 +513,200 @@ function populateIconSelect(selectId, selectedIcon = '') {
 
 /**
  * Retorna um nome descritivo para o ícone
+ * Mapeia todos os ícones disponíveis com seus nomes em português
  */
 function getIconName(icon) {
   const names = {
+    // Eletrônicos
     '🖥️': 'Computador',
     '📱': 'Celular',
     '💻': 'Notebook',
+    '🖨️': 'Impressora',
     '📺': 'TV',
+    '🎧': 'Fone de Ouvido',
+    '🔊': 'Alto-Falante',
+    '📷': 'Câmera',
+    '📸': 'Câmera Fotográfica',
+    '⌚': 'Relógio',
+    '📟': 'Pager',
+    
+    // Jogos
+    '🎮': 'Jogo',
+    '🕹️': 'Controle de Jogo',
+    
+    // Casa e Móveis
     '🏠': 'Casa',
-    '🛋️': 'Móvel',
-    '🍽️': 'Cozinha',
-    '🌿': 'Jardim',
-    '🍎': 'Alimento',
-    '🍔': 'Comida',
-    '🥤': 'Bebida',
+    '🏡': 'Casa de Campo',
+    '🛋️': 'Sofá',
+    '🛏️': 'Cama',
+    '🛒': 'Carrinho de Compras',
+    
+    // Cozinha
+    '🍽️': 'Utensílios de Cozinha',
+    '🍔': 'Hambúrguer',
+    '🍕': 'Pizza',
+    '🍣': 'Sushi',
+    '🍜': 'Macarrão',
+    '🍩': 'Rosquinha',
+    '🥐': 'Croissant',
+    '🥗': 'Salada',
+    
+    // Frutas e Alimentos
+    '🍎': 'Maçã',
+    '🍊': 'Laranja',
+    '🍋': 'Limão',
+    
+    // Bebidas
     '☕': 'Café',
-    '👗': 'Roupa',
+    '🍵': 'Chá',
+    '🍷': 'Vinho',
+    '🍺': 'Cerveja',
+    '🥂': 'Champagne',
+    '🍾': 'Garrafa',
+    '🍹': 'Coquetel',
+    '🧋': 'Bebida de Bolha',
+    '🥤': 'Bebida',
+    
+    // Doces
+    '🍫': 'Chocolate',
+    '🍪': 'Biscoito',
+    '🍨': 'Sorvete',
+    '🍦': 'Picolé',
+    
+    // Roupas
     '👕': 'Camiseta',
-    '👟': 'Sapato',
-    '💄': 'Beleza',
-    '💅': 'Manicure',
-    '💊': 'Farmácia',
-    '🐾': 'Pet',
+    '👗': 'Vestido',
+    '👠': 'Sapato de Salto',
+    '👟': 'Tênis',
+    
+    // Acessórios
+    '🧢': 'Boné',
+    '👜': 'Bolsa',
+    '💍': 'Anel',
+    '👑': 'Coroa',
+    '🕶️': 'Óculos de Sol',
+    '🧣': 'Cachecol',
+    '🧤': 'Luvas',
+    '🧦': 'Meias',
+    
+    // Beleza e Higiene
+    '💄': 'Maquiagem',
+    '🧴': 'Produto de Higiene',
+    '🧷': 'Alfinete',
+    '🛁': 'Banheira',
+    '🧼': 'Sabonete',
+    '🪒': 'Barbeador',
+    '🩴': 'Chinelo',
+    
+    // Esportes
+    '⚽': 'Futebol',
+    '🏀': 'Basquete',
+    '🏈': 'Futebol Americano',
+    '🎾': 'Tênis',
+    '🏐': 'Vôlei',
+    '🏓': 'Ping-Pong',
+    '🏸': 'Badminton',
+    '🏒': 'Hóquei',
+    '🥊': 'Boxe',
+    '🏹': 'Tiro com Arco',
+    '🏋️': 'Musculação',
+    '🚴': 'Bicicleta',
+    '🏕️': 'Camping',
+    '🏊': 'Natação',
+    
+    // Transporte
+    '🚗': 'Carro',
+    '🚕': 'Táxi',
+    '🚙': 'SUV',
+    '🚌': 'Ônibus',
+    '🚎': 'Trolley',
+    '🏎️': 'Carro de Corrida',
+    '🚲': 'Bicicleta',
+    '🛵': 'Scooter',
+    '⛵': 'Vela',
+    '✈️': 'Avião',
+    '🚀': 'Foguete',
+    
+    // Ferramentas
+    '🔧': 'Chave Inglesa',
+    '🔨': 'Martelo',
+    '🪛': 'Parafusadeira',
+    '🪚': 'Plaina',
+    '🧰': 'Caixa de Ferramentas',
+    '🪓': 'Motosserra',
+    '🔩': 'Parafuso',
+    
+    // Cultura e Entretenimento
+    '📚': 'Livro',
+    '🎵': 'Nota Musical',
+    '🎼': 'Pentagrama',
+    '🎤': 'Microfone',
+    '🎬': 'Filme',
+    '📽️': 'Projetor de Filme',
+    '🎨': 'Paleta de Pintura',
+    '🖼️': 'Quadro',
+    
+    // Escritório
+    '✏️': 'Lápis',
+    '📎': 'Clipe',
+    '📐': 'Esquadro',
+    '📏': 'Régua',
+    '📌': 'Alfinete',
+    
+    // Animais
     '🐶': 'Cachorro',
     '🐱': 'Gato',
-    '🏀': 'Esporte',
-    '🏋️': 'Fitness',
-    '🚗': 'Carro',
-    '🔧': 'Ferramenta',
-    '🛠️': 'Construção',
-    '🎮': 'Jogo',
-    '📚': 'Livro',
-    '🎵': 'Música',
-    '🎬': 'Filme',
-    '🗂️': 'Escritório',
-    '✏️': 'Papelaria',
-    '✈️': 'Viagem',
-    '🚲': 'Bicicleta',
-    '🎁': 'Presente',
-    '🎉': 'Festa',
-    '🔒': 'Segurança',
-    '💳': 'Financeiro',
-    '🔌': 'Tecnologia',
-    '🩺': 'Saúde'
+    '🐰': 'Coelho',
+    '🐹': 'Hamster',
+    '🐟': 'Peixe',
+    '🦜': 'Papagaio',
+    '🐾': 'Pegada',
+    
+    // Natureza
+    '🌿': 'Planta',
+    '🌵': 'Cacto',
+    '🌲': 'Árvore',
+    '💐': 'Buquê',
+    '🌺': 'Hibisco',
+    '🪴': 'Vaso de Planta',
+    
+    // Energia e Segurança
+    '💡': 'Lâmpada',
+    '🔋': 'Bateria',
+    '🔌': 'Tomada',
+    '🔒': 'Cadeado',
+    '🔑': 'Chave',
+    '🛡️': 'Escudo',
+    
+    // Pacotes e Diversos
+    '📦': 'Caixa',
+    '🧾': 'Recibo',
+    
+    // Financeiro
+    '💳': 'Cartão de Crédito',
+    '💰': 'Dinheiro',
+    
+    // Prêmios e Reconhecimento
+    '🏆': 'Troféu',
+    
+    // Outros
+    '⭐': 'Estrela',
+    '🔥': 'Fogo',
+    '❄️': 'Gelo',
+    '❤️': 'Coração Vermelho',
+    '🧡': 'Coração Laranja',
+    '💛': 'Coração Amarelo',
+    '💚': 'Coração Verde',
+    '💙': 'Coração Azul',
+    '💜': 'Coração Roxo',
+    '🖤': 'Coração Preto',
+    '🤍': 'Coração Branco',
+    '🤎': 'Coração Marrom',
+    '✨': 'Brilho',
+    '⚡': 'Raio',
+    '🪄': 'Varinha Mágica',
+    '🔭': 'Telescópio',
+    '🧭': 'Bússola'
   };
   return names[icon] || icon;
 }
@@ -863,6 +1014,11 @@ function criarElementoDepartamento(departamento) {
   item.className = 'cat-item';
   item.id = `dept-${departamento.id}`;
   
+  // Adicionar classe 'inactive' se o departamento está desativado
+  if (!departamento.ativo) {
+    item.classList.add('inactive');
+  }
+  
   // Chevron (ícone de expandir)
   const chevron = document.createElement('div');
   chevron.className = 'chevron';
@@ -914,8 +1070,11 @@ function criarElementoDepartamento(departamento) {
   subList.className = 'sub-list';
   subList.id = `sublist-${departamento.id}`;
   
-  // Adicionar evento de clique para expandir/recolher
+  // Adicionar evento de clique para expandir/recolher e selecionar
   item.addEventListener('click', () => {
+    // Selecionar o departamento
+    selectItem(item);
+    
     const isOpen = chevron.classList.contains('open');
     
     if (!isOpen) {
@@ -923,7 +1082,7 @@ function criarElementoDepartamento(departamento) {
       fecharTodosDepartamentos();
       
       // Carregar categorias filhas se não estiverem carregadas
-      carregarCategorias(departamento.id, subList, chevron);
+      carregarCategorias(departamento.id, subList, chevron, departamento.ativo);
     } else {
       // Apenas recolher
       chevron.classList.remove('open');
@@ -944,13 +1103,14 @@ function criarElementoDepartamento(departamento) {
  * @param {number} id_pai - ID do departamento pai
  * @param {HTMLElement} subList - Container para listar as subcategorias
  * @param {HTMLElement} chevron - Ícone de chevron a ser atualizado
+ * @param {boolean} parentActive - Se o pai está ativo (afeta renderização de filhos)
  */
-function carregarCategorias(id_pai, subList, chevron) {
+function carregarCategorias(id_pai, subList, chevron, parentActive = true) {
   fetch(`http://localhost:3000/api/categorias?id_pai=${id_pai}`)
     .then(response => response.json())
     .then(data => {
       if (data.sucesso && data.dados) {
-        exibirCategorias(data.dados, subList, chevron);
+        exibirCategorias(data.dados, subList, chevron, parentActive);
       }
     })
     .catch(err => {
@@ -965,8 +1125,9 @@ function carregarCategorias(id_pai, subList, chevron) {
  * @param {Array} categorias - Lista de categorias filhas
  * @param {HTMLElement} subList - Container para listar as subcategorias
  * @param {HTMLElement} chevron - Ícone de chevron a ser atualizado
+ * @param {boolean} parentActive - Se o pai está ativo
  */
-function exibirCategorias(categorias, subList, chevron) {
+function exibirCategorias(categorias, subList, chevron, parentActive = true) {
   // Limpar conteúdo anterior
   subList.innerHTML = '';
 
@@ -982,7 +1143,7 @@ function exibirCategorias(categorias, subList, chevron) {
   } else {
     // Renderizar cada categoria
     categorias.forEach(categoria => {
-      const subItem = criarElementoCategoria(categoria);
+      const subItem = criarElementoCategoria(categoria, parentActive);
       subList.appendChild(subItem);
     });
   }
@@ -1032,12 +1193,78 @@ function fecharTodasCategorias(grupoAtual) {
 }
 
 /**
+ * Obtém todos os ancestrais de um item na árvore (pais, avós, etc.)
+ * Retorna um array de elementos do tipo .cat-item ou .cat-subitem
+ * 
+ * @param {HTMLElement} itemElement - Elemento .cat-item ou .cat-subitem
+ * @returns {Array<HTMLElement>} Array com o item e todos seus ancestrais
+ */
+function getAncestorsPath(itemElement) {
+  const path = [itemElement];
+  let current = itemElement;
+  
+  // Navegar para cima na árvore
+  while (current) {
+    // Encontrar o grupo contendo o item atual (.cat-group ou .cat-subgroup)
+    const group = current.closest('.cat-group') || current.closest('.cat-subgroup');
+    if (!group) break;
+    
+    // Encontrar o sub-list que contém este grupo
+    const subList = group.parentElement;
+    if (!subList || !subList.classList.contains('sub-list')) break;
+    
+    // Encontrar o grupo pai que contém aquele sub-list
+    const parentGroup = subList.closest('.cat-group') || subList.closest('.cat-subgroup');
+    if (!parentGroup) break;
+    
+    // Encontrar o item (.cat-item ou .cat-subitem) dentro do grupo pai
+    let parentItem = null;
+    if (parentGroup.classList.contains('cat-group')) {
+      parentItem = parentGroup.querySelector('.cat-item');
+    } else if (parentGroup.classList.contains('cat-subgroup')) {
+      parentItem = parentGroup.querySelector('.cat-subitem');
+    }
+    
+    if (!parentItem) break;
+    
+    path.unshift(parentItem); // Adicionar ao início do caminho
+    current = parentItem;
+  }
+  
+  return path;
+}
+
+/**
+ * Seleciona um item (departamento ou categoria) marcando-o como ativo
+ * Marca também todos os seus ancestrais (pais, avós) como ativos
+ * Cria um "caminho" visual dentro da árvore mercadológica
+ * 
+ * @param {HTMLElement} itemElement - Elemento .cat-item ou .cat-subitem a ser selecionado
+ */
+function selectItem(itemElement) {
+  // Remover .active de todos os departamentos e categorias
+  document.querySelectorAll('.cat-item.active, .cat-subitem.active').forEach(item => {
+    item.classList.remove('active');
+  });
+  
+  if (!itemElement) return;
+  
+  // Obter o caminho completo (item + todos os ancestrais)
+  const path = getAncestorsPath(itemElement);
+  
+  // Adicionar .active a todos os itens do caminho
+  path.forEach(item => {
+    item.classList.add('active');
+  });
+}
+
+/**
  * Cria um elemento de categoria filha
  * 
  * @param {Object} categoria - Dados da categoria
  * @returns {HTMLElement} Elemento DOM da categoria
  */
-function criarElementoCategoria(categoria) {
+function criarElementoCategoria(categoria, parentActive = true) {
   const grupo = document.createElement('div');
   grupo.className = 'cat-subgroup';
   grupo.id = `catgroup-${categoria.id}`;
@@ -1046,6 +1273,11 @@ function criarElementoCategoria(categoria) {
   const item = document.createElement('div');
   item.className = 'cat-subitem';
   item.id = `cat-${categoria.id}`;
+  
+  // Adicionar classe 'inactive' se a categoria está desativada ou se o pai está desativado
+  if (!categoria.ativo || !parentActive) {
+    item.classList.add('inactive');
+  }
   
   // Chevron (ícone de expandir)
   const chevron = document.createElement('div');
@@ -1093,9 +1325,13 @@ function criarElementoCategoria(categoria) {
   subList.className = 'sub-list';
   subList.id = `sublist-${categoria.id}`;
   
-  // Adicionar evento de clique para expandir/recolher
+  // Adicionar evento de clique para expandir/recolher e selecionar
   item.addEventListener('click', (e) => {
     e.stopPropagation();
+    
+    // Selecionar a categoria
+    selectItem(item);
+    
     const isOpen = chevron.classList.contains('open');
     
     if (!isOpen) {
@@ -1103,7 +1339,7 @@ function criarElementoCategoria(categoria) {
       fecharTodasCategorias(grupo);
       
       // Carregar subcategorias se não estiverem carregadas
-      carregarCategorias(categoria.id, subList, chevron);
+      carregarCategorias(categoria.id, subList, chevron, categoria.ativo);
     } else {
       // Apenas recolher
       chevron.classList.remove('open');
