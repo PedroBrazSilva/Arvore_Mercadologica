@@ -1,54 +1,74 @@
 /**
- * Controller de Categorias
+ * Controller de Categorias (REFATORADO)
  * 
- * Centraliza toda a lógica de negócio para categorias (nós filhos)
+ * Centraliza a lógica de negócio para categorias usando:
+ * - Repository para acesso a dados
+ * - Validators para validações
+ * - Erros customizados para tratamento consistente
  */
 
-const pool = require('../db');
+const CategoriaRepository = require('../repositories/CategoriaRepository');
+const Validators = require('../utils/validators');
+const Logger = require('../utils/logger');
+const { ValidationError, ConflictError, NotFoundError } = require('../utils/errors');
 
 class CategoriaController {
   /**
    * Obter categorias filhas por id_pai
    */
-  static async obterPorPai(req, res) {
+  static async obterPorPai(req, res, next) {
     try {
       const { id_pai } = req.query;
 
-      // Validação: id_pai é obrigatório
-      if (id_pai === undefined || id_pai === null) {
-        return res.status(400).json({ erro: 'id_pai é obrigatório' });
+      // Validação: id_pai
+      const validation = Validators.validateIdPai(id_pai);
+      if (!validation.valid) {
+        throw new ValidationError(validation.error, 'id_pai');
       }
 
-      // Query: seleciona categorias filhas do id_pai especificado
-      const [rows] = await pool.query(
-        'SELECT * FROM categoria_no WHERE id_pai = ? ORDER BY nome',
-        [id_pai]
-      );
+      // Verificar se pai existe
+      const existe = await CategoriaRepository.parentExists(id_pai);
+      if (!existe) {
+        throw new NotFoundError('Categoria pai');
+      }
 
-      res.json({ sucesso: true, dados: rows });
+      // Obter categorias filhas
+      const categorias = await CategoriaRepository.findByIdPai(id_pai);
+
+      res.status(200).json({
+        status: 'success',
+        data: categorias
+      });
     } catch (err) {
-      console.error('Erro ao obter categorias:', err);
-      res.status(500).json({ erro: 'Erro ao obter categorias' });
+      next(err);
     }
   }
 
   /**
    * Obter categoria específica por ID
    */
-  static async obterPorId(req, res) {
+  static async obterPorId(req, res, next) {
     try {
       const { id } = req.params;
-      const [rows] = await pool.query('SELECT * FROM categoria_no WHERE id = ?', [id]);
-      const categoria = rows[0] || null;
 
-      if (!categoria) {
-        return res.status(404).json({ erro: 'Categoria não encontrada' });
+      // Validação: ID
+      const validation = Validators.validateId(id);
+      if (!validation.valid) {
+        throw new ValidationError(validation.error, 'id');
       }
 
-      res.json({ sucesso: true, dados: categoria });
+      // Buscar categoria
+      const categoria = await CategoriaRepository.findById(id);
+      if (!categoria) {
+        throw new NotFoundError('Categoria');
+      }
+
+      res.status(200).json({
+        status: 'success',
+        data: categoria
+      });
     } catch (err) {
-      console.error('Erro ao obter categoria:', err);
-      res.status(500).json({ erro: 'Erro ao obter categoria' });
+      next(err);
     }
   }
 
@@ -56,65 +76,49 @@ class CategoriaController {
    * Criar nova categoria (nó filho)
    * Body: { nome, descricao?, icone?, id_pai }
    */
-  static async criar(req, res) {
+  static async criar(req, res, next) {
     try {
       const { nome, descricao, icone, id_pai } = req.body;
 
-      // Validação: nome é obrigatório
-      if (!nome) {
-        return res.status(400).json({ erro: 'Nome é obrigatório' });
+      // Validação: nome
+      const nomeValidation = Validators.validateNome(nome);
+      if (!nomeValidation.valid) {
+        throw new ValidationError(nomeValidation.error, 'nome');
       }
 
-      // Validação: id_pai é obrigatório (categoria filha deve ter pai)
-      if (id_pai === undefined || id_pai === null) {
-        return res.status(400).json({ erro: 'id_pai é obrigatório' });
+      // Validação: id_pai
+      const idPaiValidation = Validators.validateIdPai(id_pai);
+      if (!idPaiValidation.valid) {
+        throw new ValidationError(idPaiValidation.error, 'id_pai');
       }
 
-      // RN-02: Validação de extensão mínima (ao menos 4 caracteres, ignorando espaços extras)
-      const normalizedForLength = nome.replace(/\s+/g, ' ').trim();
-      if (normalizedForLength.length < 4) {
-        return res.status(400).json({ erro: 'O nome deve possuir pelo menos 4 caracteres' });
+      // Verificar se pai existe
+      const paiExiste = await CategoriaRepository.parentExists(id_pai);
+      if (!paiExiste) {
+        throw new NotFoundError('Categoria pai');
       }
 
-      // Verificar se o pai existe na tabela
-      const [paiRows] = await pool.query(
-        'SELECT id FROM categoria_no WHERE id = ? LIMIT 1',
-        [id_pai]
-      );
-      if (!paiRows || paiRows.length === 0) {
-        return res.status(400).json({ erro: 'Categoria pai não encontrada' });
+      // RN-01: Verificar unicidade entre irmãos
+      const nomeExiste = await CategoriaRepository.checkNomeExistsBySibling(nome, id_pai);
+      if (nomeExiste) {
+        throw new ConflictError('Nome já existe entre as categorias do mesmo pai');
       }
 
-      // RN-01: Unicidade de nome entre irmãos (mesmo id_pai), ignorando case e espaços
-      const compareKey = nome.replace(/\s+/g, '').toLowerCase();
-      const [existing] = await pool.query(
-        'SELECT id FROM categoria_no WHERE id_pai = ? AND LOWER(REPLACE(nome, " ", "")) = ? LIMIT 1',
-        [id_pai, compareKey]
-      );
-
-      if (existing && existing.length > 0) {
-        return res.status(409).json({ erro: 'Nome já existe entre as categorias do mesmo pai' });
-      }
-
-      // Insert no banco com id_pai informado
-      const [result] = await pool.query(
-        'INSERT INTO categoria_no (nome, descricao, icone, id_pai) VALUES (?, ?, ?, ?)',
-        [nome, descricao || '', icone || '', id_pai]
-      );
-
-      // Retorna resposta conforme especificado
-      res.status(201).json({
-        sucesso: true,
-        mensagem: 'Categoria criada com sucesso',
-        id: result.insertId,
+      // Criar categoria
+      const categoria = await CategoriaRepository.create({
         nome,
-        descricao: descricao || '',
-        icone: icone || '',
+        descricao,
+        icone,
         id_pai
       });
+
+      res.status(201).json({
+        status: 'success',
+        data: categoria,
+        message: 'Categoria criada com sucesso'
+      });
     } catch (err) {
-      console.error('Erro ao criar categoria:', err);
-      res.status(500).json({ erro: 'Erro ao criar categoria' });
+      next(err);
     }
   }
 
@@ -122,101 +126,101 @@ class CategoriaController {
    * Atualizar categoria existente
    * Body: { nome, descricao?, icone?, ativo? }
    */
-  static async atualizar(req, res) {
+  static async atualizar(req, res, next) {
     try {
       const { id } = req.params;
       const { nome, descricao, icone, ativo } = req.body;
 
-      // Validação: nome é obrigatório
-      if (!nome) {
-        return res.status(400).json({ erro: 'Nome é obrigatório' });
+      // Validação: ID
+      const idValidation = Validators.validateId(id);
+      if (!idValidation.valid) {
+        throw new ValidationError(idValidation.error, 'id');
       }
 
-      // RN-02: Validação de extensão mínima (ao menos 4 caracteres)
-      const normalizedForLength = nome.replace(/\s+/g, ' ').trim();
-      if (normalizedForLength.length < 4) {
-        return res.status(400).json({ erro: 'O nome deve possuir pelo menos 4 caracteres' });
+      // Verificar se categoria existe
+      const categoria = await CategoriaRepository.findById(id);
+      if (!categoria) {
+        throw new NotFoundError('Categoria');
       }
 
-      // Obter informações da categoria atual (para saber o id_pai)
-      const [catRows] = await pool.query(
-        'SELECT id_pai FROM categoria_no WHERE id = ? LIMIT 1',
-        [id]
-      );
-      if (!catRows || catRows.length === 0) {
-        return res.status(404).json({ erro: 'Categoria não encontrada' });
+      // Validação: nome (se fornecido)
+      if (nome !== undefined) {
+        const nomeValidation = Validators.validateNome(nome);
+        if (!nomeValidation.valid) {
+          throw new ValidationError(nomeValidation.error, 'nome');
+        }
+
+        // RN-01: Verificar unicidade entre irmãos
+        const nomeExiste = await CategoriaRepository.checkNomeExistsBySibling(
+          nome,
+          categoria.id_pai,
+          id
+        );
+        if (nomeExiste) {
+          throw new ConflictError('Nome já existe entre as categorias do mesmo pai');
+        }
       }
 
-      const id_pai = catRows[0].id_pai;
-
-      // RN-01: Verificar unicidade entre irmãos (mesmo id_pai), excluindo o próprio registro
-      const compareKey = nome.replace(/\s+/g, '').toLowerCase();
-      const [existing] = await pool.query(
-        'SELECT id FROM categoria_no WHERE id_pai = ? AND LOWER(REPLACE(nome, " ", "")) = ? AND id != ? LIMIT 1',
-        [id_pai, compareKey, id]
-      );
-
-      if (existing && existing.length > 0) {
-        return res.status(409).json({ erro: 'Nome já existe entre as categorias do mesmo pai' });
-      }
-
-      // Preparar campos a atualizar
-      let updateFields = ['nome = ?', 'descricao = ?'];
-      let params = [nome, descricao || ''];
-
-      if (icone !== undefined) {
-        updateFields.push('icone = ?');
-        params.push(icone || '');
-      }
-
+      // Se está atualizando status, fazer cascata
       if (ativo !== undefined) {
-        updateFields.push('ativo = ?');
-        params.push(ativo ? 1 : 0);
-
-        // Se está desativando, desativar todos os filhos em cascata
-        if (!ativo) {
-          await pool.query(
-            `UPDATE categoria_no SET ativo = 0 
-             WHERE id IN (
-               WITH RECURSIVE cte AS (
-                 SELECT id FROM categoria_no WHERE id_pai = ?
-                 UNION ALL
-                 SELECT c.id FROM categoria_no c INNER JOIN cte ON c.id_pai = cte.id
-               )
-               SELECT id FROM cte
-             ) OR id_pai = ?`,
-            [id, id]
-          );
-        }
-        // Se está ativando, ativar todos os filhos em cascata
-        else {
-          await pool.query(
-            `UPDATE categoria_no SET ativo = 1 
-             WHERE id IN (
-               WITH RECURSIVE cte AS (
-                 SELECT id FROM categoria_no WHERE id_pai = ?
-                 UNION ALL
-                 SELECT c.id FROM categoria_no c INNER JOIN cte ON c.id_pai = cte.id
-               )
-               SELECT id FROM cte
-             ) OR id_pai = ?`,
-            [id, id]
-          );
-        }
+        await CategoriaRepository.updateStatusCascade(id, ativo);
       }
 
-      params.push(id);
+      // Atualizar categoria
+      const categoriaAtualizada = await CategoriaRepository.update(id, {
+        nome,
+        descricao,
+        icone,
+        ativo: ativo === undefined ? undefined : ativo
+      });
 
-      // Update: modifica registro existente
-      await pool.query(
-        `UPDATE categoria_no SET ${updateFields.join(', ')} WHERE id = ?`,
-        params
-      );
-
-      res.json({ sucesso: true, mensagem: 'Categoria atualizada com sucesso' });
+      res.status(200).json({
+        status: 'success',
+        data: categoriaAtualizada,
+        message: 'Categoria atualizada com sucesso'
+      });
     } catch (err) {
-      console.error('Erro ao atualizar categoria:', err);
-      res.status(500).json({ erro: 'Erro ao atualizar categoria' });
+      next(err);
+    }
+  }
+
+  /**
+   * Deletar categoria (RN-10: Bloqueia se possui filhos)
+   */
+  static async deletar(req, res, next) {
+    try {
+      const { id } = req.params;
+
+      // Validação: ID
+      const validation = Validators.validateId(id);
+      if (!validation.valid) {
+        throw new ValidationError(validation.error, 'id');
+      }
+
+      // Verificar se categoria existe
+      const categoria = await CategoriaRepository.findById(id);
+      if (!categoria) {
+        throw new NotFoundError('Categoria');
+      }
+
+      // RN-10: Verificar se possui filhos
+      const totalFilhos = await CategoriaRepository.countChildren(id);
+      if (totalFilhos > 0) {
+        throw new ConflictError(
+          `Não é possível deletar uma categoria que possui ${totalFilhos} subcategoria(s). ` +
+          'Delete ou mova as subcategorias primeiro.'
+        );
+      }
+
+      // Deletar
+      await CategoriaRepository.delete(id);
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Categoria deletada com sucesso'
+      });
+    } catch (err) {
+      next(err);
     }
   }
 }

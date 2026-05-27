@@ -33,4 +33,10 @@ router.post('/', CategoriaController.criar);
  */
 router.put('/:id', CategoriaController.atualizar);
 
+/**
+ * DELETE /api/categorias/:id
+ * Deletar categoria
+ */
+router.delete('/:id', CategoriaController.deletar);
+
 module.exports = router;

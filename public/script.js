@@ -387,12 +387,12 @@ async function openEditDepartmentModal(id) {
     }
 
     const data = await response.json();
-    if (!data.sucesso) {
+    if (data.status !== 'success') {
       showToast('Erro ao carregar departamento', 'error');
       return;
     }
 
-    const dept = data.dados;
+    const dept = data.data;
 
     // Preencher formulário
     document.getElementById('editDeptId').value = dept.id;
@@ -429,12 +429,12 @@ async function openEditCategoryModal(id) {
     }
 
     const data = await response.json();
-    if (!data.sucesso) {
+    if (data.status !== 'success') {
       showToast('Erro ao carregar categoria', 'error');
       return;
     }
 
-    const cat = data.dados;
+    const cat = data.data;
 
     // Preencher formulário
     document.getElementById('editCatId').value = cat.id;
@@ -801,7 +801,8 @@ function saveEditCategory(event) {
     body: JSON.stringify(dados)
   })
   .then(async response => {
-    const body = await response.json().catch(() => ({}));
+    const body = await response.json();
+    
     if (!response.ok) {
       if (response.status === 409 || response.status === 400) {
         const errMsg = body.erro || 'Erro ao atualizar';
@@ -820,7 +821,7 @@ function saveEditCategory(event) {
   })
   .catch(err => {
     console.error('Erro ao atualizar categoria:', err);
-    showToast('Erro ao atualizar categoria', 'error');
+    showToast('Erro ao atualizar categoria. Verifique o console.', 'error');
   });
 }
 
@@ -861,8 +862,29 @@ function clearEditCatNameError() {
  */
 function handleDeleteItem(itemId, itemType) {
   if (confirm(`Tem certeza que deseja excluir este ${itemType}?`)) {
-    showToast(`${itemType} excluído com sucesso!`, 'success');
-    // TODO: Implementar deleção via API
+    const endpoint = itemType === 'departamento' 
+      ? `http://localhost:3000/api/departamentos/${itemId}`
+      : `http://localhost:3000/api/categorias/${itemId}`;
+
+    fetch(endpoint, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(async response => {
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        showToast(body.message || `Erro ao excluir ${itemType}`, 'error');
+        return;
+      }
+
+      showToast(`${itemType} excluído com sucesso!`, 'success', { center: true });
+      closeContextMenu();
+      carregarDepartamentos();
+    })
+    .catch(err => {
+      console.error(`Erro ao excluir ${itemType}:`, err);
+      showToast(`Erro ao excluir ${itemType}`, 'error');
+    });
   }
 }
 
@@ -936,8 +958,8 @@ function carregarDepartamentos() {
   fetch('http://localhost:3000/api/departamentos')
     .then(response => response.json())
     .then(data => {
-      if (data.sucesso && data.dados) {
-        exibirDepartamentos(data.dados);
+      if (data.status === 'success' && data.data) {
+        exibirDepartamentos(data.data);
       }
     })
     .catch(err => {
@@ -1109,8 +1131,8 @@ function carregarCategorias(id_pai, subList, chevron, parentActive = true) {
   fetch(`http://localhost:3000/api/categorias?id_pai=${id_pai}`)
     .then(response => response.json())
     .then(data => {
-      if (data.sucesso && data.dados) {
-        exibirCategorias(data.dados, subList, chevron, parentActive);
+      if (data.status === 'success' && data.data) {
+        exibirCategorias(data.data, subList, chevron, parentActive);
       }
     })
     .catch(err => {

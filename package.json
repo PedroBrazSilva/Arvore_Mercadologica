@@ -5,8 +5,7 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "nodemon server/index.js",
-    "db-test": "node server/db_test.js"
+    "dev": "nodemon server/index.js"
   },
   "dependencies": {
     "express": "^4.18.2",
