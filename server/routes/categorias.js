@@ -16,6 +16,12 @@ const router = express.Router();
 router.get('/', CategoriaController.obterPorPai);
 
 /**
+ * GET /api/categorias/:id/move-options
+ * Obter opções de movimentação para uma categoria
+ */
+router.get('/:id/move-options', CategoriaController.obterOpcoesMovimento);
+
+/**
  * GET /api/categorias/:id
  * Obter categoria específica por ID
  */
@@ -32,6 +38,12 @@ router.post('/', CategoriaController.criar);
  * Atualizar categoria existente
  */
 router.put('/:id', CategoriaController.atualizar);
+
+/**
+ * PATCH /api/categorias/:id/move
+ * Mover categoria para outro pai
+ */
+router.patch('/:id/move', CategoriaController.mover);
 
 /**
  * DELETE /api/categorias/:id

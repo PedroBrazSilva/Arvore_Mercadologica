@@ -182,6 +182,14 @@
           <option value="0">Desativo</option>
         </select>
       </div>
+
+      <div class="form-group">
+        <label for="editCatNewParent">Mover para</label>
+        <select id="editCatNewParent" name="novoIdPai">
+          <option value="">Carregando opções...</option>
+        </select>
+        <div id="editCatNewParentError" class="field-error" aria-live="polite"></div>
+      </div>
       
       <div class="modal-footer">
         <button type="button" class="btn-cancel" onclick="closeEditCategoryModal()">Cancelar</button>

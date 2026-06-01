@@ -160,6 +160,72 @@ class CategoriaRepository {
 
     return true;
   }
-}
+
+  /**
+   * Verificar se existe ciclo ao mover um nó para um novo pai
+   * Um ciclo ocorre quando o novo pai é descendente do nó
+   * Retorna: boolean (true = ciclo existe, false = sem ciclo)
+   */
+  async checkCycleExists(nodeId, potentialParentId) {
+    // Se novo pai é null, não há ciclo
+    if (!potentialParentId) {
+      return false;
+    }
+
+    // Buscar todos os descendentes do nó usando CTE (recursão)
+    const [rows] = await pool.query(
+      `WITH RECURSIVE descendants AS (
+         SELECT id FROM categoria_no WHERE id_pai = ?
+         UNION ALL
+         SELECT c.id FROM categoria_no c INNER JOIN descendants d ON c.id_pai = d.id
+       )
+       SELECT id FROM descendants WHERE id = ? LIMIT 1`,
+      [nodeId, potentialParentId]
+    );
+
+    return rows.length > 0; // Se encontrou, é um descendente, portanto ciclo existe
+  }
+
+  /**
+   * Atualizar o id_pai de uma categoria (movimentação)
+   * Apenas atualiza o campo id_pai, não toca em outro
+   */
+  async updateParent(id, newIdPai) {
+    const updateValue = newIdPai === null ? null : newIdPai;
+    await pool.query('UPDATE categoria_no SET id_pai = ? WHERE id = ?', [updateValue, id]);
+    return this.findById(id);
+  }
+
+  /**
+   * Obter todas as opções de movimentação para uma categoria
+   * Retorna a árvore completa EXCETO o nó sendo movido e seus descendentes
+   * Formato: { id, nome, nivel, id_pai }
+   * Ordenado hierarquicamente
+   */
+  async getMoveOptions(excludeId) {
+    // Usar CTE para listar toda árvore, depois filtrar
+    const [rows] = await pool.query(
+      `WITH RECURSIVE tree AS (
+         SELECT id, nome, id_pai, 0 as nivel FROM categoria_no WHERE id_pai IS NULL
+         UNION ALL
+         SELECT c.id, c.nome, c.id_pai, t.nivel + 1 
+         FROM categoria_no c 
+         INNER JOIN tree t ON c.id_pai = t.id
+       ),
+       descendants AS (
+         SELECT id FROM tree WHERE id = ?
+         UNION ALL
+         SELECT c.id FROM categoria_no c INNER JOIN descendants d ON c.id_pai = d.id
+       )
+       SELECT id, nome, nivel, id_pai 
+       FROM tree 
+       WHERE id NOT IN (SELECT id FROM descendants)
+       ORDER BY id_pai, nome`,
+      [excludeId]
+    );
+
+    return rows;
+  }
+};
 
 module.exports = new CategoriaRepository();

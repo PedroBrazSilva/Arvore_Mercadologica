@@ -223,7 +223,112 @@ class CategoriaController {
       next(err);
     }
   }
-}
+
+  /**
+   * Obter opções de movimentação para uma categoria
+   * GET /api/categorias/:id/move-options
+   * Retorna lista hierárquica de possíveis destinos
+   */
+  static async obterOpcoesMovimento(req, res, next) {
+    try {
+      const { id } = req.params;
+
+      // Validação: ID
+      const validation = Validators.validateId(id);
+      if (!validation.valid) {
+        throw new ValidationError(validation.error, 'id');
+      }
+
+      // Verificar se categoria existe
+      const categoria = await CategoriaRepository.findById(id);
+      if (!categoria) {
+        throw new NotFoundError('Categoria');
+      }
+
+      // Obter opções (árvore completa exceto este nó e seus descendentes)
+      const opcoes = await CategoriaRepository.getMoveOptions(id);
+
+      res.status(200).json({
+        status: 'success',
+        data: opcoes
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Mover categoria para outro pai
+   * PATCH /api/categorias/:id/move
+   * Body: { novoIdPai: number|null }
+   */
+  static async mover(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { novoIdPai } = req.body;
+
+      // Validação: ID
+      const idValidation = Validators.validateId(id);
+      if (!idValidation.valid) {
+        throw new ValidationError(idValidation.error, 'id');
+      }
+
+      // Validação: movimento
+      const movimentoValidation = Validators.validateMovement(id, novoIdPai);
+      if (!movimentoValidation.valid) {
+        throw new ValidationError(movimentoValidation.error, 'novoIdPai');
+      }
+
+      // Verificar se categoria existe
+      const categoria = await CategoriaRepository.findById(id);
+      if (!categoria) {
+        throw new NotFoundError('Categoria');
+      }
+
+      // Se novo pai não é null, verificar se existe
+      if (novoIdPai) {
+        const novoExiste = await CategoriaRepository.findById(novoIdPai);
+        if (!novoExiste) {
+          throw new NotFoundError('Nova categoria pai');
+        }
+      }
+
+      // Verificar ciclos
+      const temCiclo = await CategoriaRepository.checkCycleExists(id, novoIdPai);
+      if (temCiclo) {
+        throw new ValidationError(
+          'Não é possível mover uma categoria para um de seus descendentes (ciclo detectado)',
+          'novoIdPai'
+        );
+      }
+
+      // Se mudando de pai, verificar RN-01 (unicidade entre irmãos)
+      if (novoIdPai !== categoria.id_pai) {
+        const nomeExiste = await CategoriaRepository.checkNomeExistsBySibling(
+          categoria.nome,
+          novoIdPai,
+          id
+        );
+        if (nomeExiste) {
+          throw new ConflictError(
+            'Já existe uma categoria com este nome no novo departamento/categoria destino'
+          );
+        }
+      }
+
+      // Executar movimento
+      const categoriaAtualizada = await CategoriaRepository.updateParent(id, novoIdPai);
+
+      res.status(200).json({
+        status: 'success',
+        data: categoriaAtualizada,
+        message: 'Categoria movida com sucesso'
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+};
 
 module.exports = CategoriaController;
 

@@ -60,6 +60,34 @@ const Validators = {
     }
 
     return { valid: true };
+  },
+
+  /**
+   * Valida movimentação de categoria
+   * Regras: categoria e novo_pai devem ser IDs válidos
+   * Nota: Verificação de ciclos é feita no repository
+   */
+  validateMovement(categoriaId, novoIdPai) {
+    // Validar ID da categoria
+    const catValidation = this.validateId(categoriaId);
+    if (!catValidation.valid) {
+      return { valid: false, error: `Categoria: ${catValidation.error}` };
+    }
+
+    // Novo pai pode ser null ou um ID válido
+    if (novoIdPai !== null && novoIdPai !== undefined) {
+      const numIdPai = parseInt(novoIdPai, 10);
+      if (isNaN(numIdPai) || numIdPai <= 0) {
+        return { valid: false, error: 'Novo pai deve ser um número válido' };
+      }
+    }
+
+    // Validar que não está tentando mover para si mesmo
+    if (parseInt(categoriaId, 10) === parseInt(novoIdPai, 10)) {
+      return { valid: false, error: 'Não é possível mover uma categoria para si mesma' };
+    }
+
+    return { valid: true };
   }
 };
 

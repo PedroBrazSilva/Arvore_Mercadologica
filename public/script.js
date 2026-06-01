@@ -443,6 +443,20 @@ async function openEditCategoryModal(id) {
     document.getElementById('editCatDescription').value = cat.descricao || '';
     document.getElementById('editCatStatus').value = cat.ativo ? '1' : '0';
 
+    // Carregar opções de movimentação
+    try {
+      const moveResponse = await fetch(`http://localhost:3000/api/categorias/${id}/move-options`);
+      if (moveResponse.ok) {
+        const moveData = await moveResponse.json();
+        if (moveData.status === 'success') {
+          populateMoveOptions(moveData.data, cat.id_pai);
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao carregar opções de movimento:', err);
+      // Continuar mesmo se não conseguir carregar opções
+    }
+
     // Limpar erros
     clearEditCatNameError();
 
@@ -455,6 +469,33 @@ async function openEditCategoryModal(id) {
     console.error('Erro ao abrir modal de edição de categoria:', err);
     showToast('Erro ao carregar categoria', 'error');
   }
+}
+
+/**
+ * Preenche o select de movimentação com opções hierárquicas
+ */
+function populateMoveOptions(opcoes, currentIdPai) {
+  const selectElement = document.getElementById('editCatNewParent');
+  selectElement.innerHTML = ''; // Limpar opções anteriores
+
+  // Opção para mover para raiz (se aplicável)
+  const rootOption = document.createElement('option');
+  rootOption.value = '';
+  rootOption.textContent = 'Raiz (sem pai)';
+  selectElement.appendChild(rootOption);
+
+  // Adicionar todas as opções com indentação hierárquica
+  opcoes.forEach(opcao => {
+    const option = document.createElement('option');
+    option.value = opcao.id;
+    // Criar indentação visual (3 espaços por nível)
+    const indentacao = '  '.repeat(opcao.nivel);
+    option.textContent = `${indentacao}${opcao.nome}`;
+    selectElement.appendChild(option);
+  });
+
+  // Marcar o pai atual como selected
+  selectElement.value = currentIdPai || '';
 }
 
 /**
@@ -778,9 +819,11 @@ function saveEditCategory(event) {
   const descricao = document.getElementById('editCatDescription').value.trim();
   const id_pai = document.getElementById('editCatParentId').value;
   const ativo = parseInt(document.getElementById('editCatStatus').value, 10);
+  const novoIdPai = document.getElementById('editCatNewParent').value;
 
   // Limpar erros
   clearEditCatNameError();
+  document.getElementById('editCatNewParentError').textContent = '';
 
   // Validar
   const normalizedForLength = nome.replace(/\s+/g, ' ').trim();
@@ -795,6 +838,7 @@ function saveEditCategory(event) {
     ativo: ativo === 1
   };
 
+  // Primeiro: Atualizar dados básicos (PUT)
   fetch(`http://localhost:3000/api/categorias/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -805,23 +849,66 @@ function saveEditCategory(event) {
     
     if (!response.ok) {
       if (response.status === 409 || response.status === 400) {
-        const errMsg = body.erro || 'Erro ao atualizar';
+        const errMsg = body.erro || body.message || 'Erro ao atualizar';
         setEditCatNameError(errMsg);
         return;
       }
-      showToast(body.erro || 'Erro ao atualizar categoria', 'error');
+      showToast(body.erro || body.message || 'Erro ao atualizar categoria', 'error');
       return;
     }
 
-    closeEditCategoryModal();
-    showToast('Categoria atualizada com sucesso!', 'success', { center: true });
-    
-    // Recarregar departamentos
-    carregarDepartamentos();
+    // Se o pai mudou, fazer PATCH para mover
+    const idPaiAtualizado = novoIdPai === '' ? null : (novoIdPai ? parseInt(novoIdPai, 10) : null);
+    const idPaiAnterior = id_pai === '' ? null : (id_pai ? parseInt(id_pai, 10) : null);
+
+    if (idPaiAtualizado !== idPaiAnterior) {
+      movimentarCategoria(id, idPaiAtualizado);
+    } else {
+      // Sem movimento, apenas fechar e recarregar
+      closeEditCategoryModal();
+      showToast('Categoria atualizada com sucesso!', 'success', { center: true });
+      carregarDepartamentos();
+    }
   })
   .catch(err => {
     console.error('Erro ao atualizar categoria:', err);
     showToast('Erro ao atualizar categoria. Verifique o console.', 'error');
+  });
+}
+
+/**
+ * Move uma categoria para um novo pai
+ */
+function movimentarCategoria(id, novoIdPai) {
+  const dados = {
+    novoIdPai: novoIdPai
+  };
+
+  fetch(`http://localhost:3000/api/categorias/${id}/move`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dados)
+  })
+  .then(async response => {
+    const body = await response.json();
+    
+    if (!response.ok) {
+      const errMsg = body.erro || body.message || 'Erro ao mover categoria';
+      if (response.status === 400 || response.status === 409) {
+        document.getElementById('editCatNewParentError').textContent = errMsg;
+      } else {
+        showToast(errMsg, 'error');
+      }
+      return;
+    }
+
+    closeEditCategoryModal();
+    showToast('Categoria movida e atualizada com sucesso!', 'success', { center: true });
+    carregarDepartamentos();
+  })
+  .catch(err => {
+    console.error('Erro ao mover categoria:', err);
+    showToast('Erro ao mover categoria. Verifique o console.', 'error');
   });
 }
 
