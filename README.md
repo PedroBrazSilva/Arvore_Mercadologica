@@ -464,6 +464,13 @@ Desenvolvido com ❤️ por Pedro Henrique Braz Silva
 
 ---
 
+## 📞 Suporte
+
+Para problemas:
+- 🐛 Issues: [GitHub Issues](https://github.com/seu-usuario/arvore-mercadologica/issues)
+
+---
+
 ## 🎯 Roadmap
 
 - [ ] Autenticação e autorização de usuários
