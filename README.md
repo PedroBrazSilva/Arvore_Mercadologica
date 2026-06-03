@@ -460,15 +460,7 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo LICENSE para d
 
 ## 👨‍💻 Autor
 
-Desenvolvido com ❤️ por [Seu Nome]
-
----
-
-## 📞 Suporte
-
-Para dúvidas ou problemas:
-- 📧 Email: seu.email@exemplo.com
-- 🐛 Issues: [GitHub Issues](https://github.com/seu-usuario/arvore-mercadologica/issues)
+Desenvolvido com ❤️ por Pedro Henrique Braz Silva
 
 ---
 

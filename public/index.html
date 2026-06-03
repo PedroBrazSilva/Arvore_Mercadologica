@@ -199,6 +199,23 @@
   </div>
 </div>
 
+<!-- MODAL: Confirmação de Deleção -->
+<div id="confirmDeleteModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Confirmar Exclusão</h2>
+      <button class="modal-close" onclick="closeDeleteConfirmModal()">&times;</button>
+    </div>
+    <div style="margin-bottom: 16px; color: var(--text-primary); font-size: 14px;">
+      Tem certeza que deseja excluir este <strong id="deleteItemType">item</strong>?
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cancel" onclick="closeDeleteConfirmModal()">Cancelar</button>
+      <button type="button" class="btn-submit" onclick="confirmDelete()" style="background: #c0392b; border-color: #a93226;">Excluir</button>
+    </div>
+  </div>
+</div>
+
 <script src="script.js"></script>
 </body>
 </html>

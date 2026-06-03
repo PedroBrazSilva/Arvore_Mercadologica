@@ -947,32 +947,83 @@ function clearEditCatNameError() {
 /**
  * Manipula a ação de excluir um item
  */
-function handleDeleteItem(itemId, itemType) {
-  if (confirm(`Tem certeza que deseja excluir este ${itemType}?`)) {
-    const endpoint = itemType === 'departamento' 
-      ? `http://localhost:3000/api/departamentos/${itemId}`
-      : `http://localhost:3000/api/categorias/${itemId}`;
+// ========== VARIÁVEIS GLOBAIS PARA CONFIRMAÇÃO DE DELEÇÃO ==========
+let pendingDeleteItemId = null;
+let pendingDeleteItemType = null;
 
-    fetch(endpoint, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' }
-    })
-    .then(async response => {
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        showToast(body.message || `Erro ao excluir ${itemType}`, 'error');
-        return;
-      }
+// ========== MODAL DE CONFIRMAÇÃO DE DELEÇÃO ==========
+/**
+ * Abre o modal de confirmação de deleção
+ * Armazena o ID e tipo do item para processar depois
+ * 
+ * @param {number} itemId - ID do item a deletar
+ * @param {string} itemType - Tipo do item ('departamento' ou 'categoria')
+ */
+function openDeleteConfirmModal(itemId, itemType) {
+  pendingDeleteItemId = itemId;
+  pendingDeleteItemType = itemType;
+  
+  // Atualizar o texto do modal com o tipo do item
+  document.getElementById('deleteItemType').textContent = itemType;
+  
+  // Mostrar o modal
+  const modal = document.getElementById('confirmDeleteModal');
+  modal.classList.add('show');
+}
 
-      showToast(`${itemType} excluído com sucesso!`, 'success', { center: true });
-      closeContextMenu();
-      carregarDepartamentos();
-    })
-    .catch(err => {
-      console.error(`Erro ao excluir ${itemType}:`, err);
-      showToast(`Erro ao excluir ${itemType}`, 'error');
-    });
+/**
+ * Fecha o modal de confirmação de deleção
+ * Limpa as variáveis globais
+ */
+function closeDeleteConfirmModal() {
+  const modal = document.getElementById('confirmDeleteModal');
+  modal.classList.remove('show');
+  
+  // Limpar variáveis
+  pendingDeleteItemId = null;
+  pendingDeleteItemType = null;
+}
+
+/**
+ * Confirma e executa a deleção do item
+ * Chamado quando o usuário clica no botão "Excluir" do modal
+ */
+function confirmDelete() {
+  if (!pendingDeleteItemId || !pendingDeleteItemType) {
+    closeDeleteConfirmModal();
+    return;
   }
+
+  const endpoint = pendingDeleteItemType === 'departamento' 
+    ? `http://localhost:3000/api/departamentos/${pendingDeleteItemId}`
+    : `http://localhost:3000/api/categorias/${pendingDeleteItemId}`;
+
+  fetch(endpoint, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' }
+  })
+  .then(async response => {
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      showToast(body.message || `Erro ao excluir ${pendingDeleteItemType}`, 'error');
+      closeDeleteConfirmModal();
+      return;
+    }
+
+    showToast(`${pendingDeleteItemType} excluído com sucesso!`, 'success', { center: true });
+    closeDeleteConfirmModal();
+    closeContextMenu();
+    carregarDepartamentos();
+  })
+  .catch(err => {
+    console.error(`Erro ao excluir ${pendingDeleteItemType}:`, err);
+    showToast(`Erro ao excluir ${pendingDeleteItemType}`, 'error');
+    closeDeleteConfirmModal();
+  });
+}
+
+function handleDeleteItem(itemId, itemType) {
+  openDeleteConfirmModal(itemId, itemType);
 }
 
 // ========== EVENTO DE CARREGAMENTO ==========
@@ -1028,6 +1079,16 @@ document.addEventListener('DOMContentLoaded', () => {
     editCatModal.addEventListener('click', (e) => {
       if (e.target === editCatModal) {
         closeEditCategoryModal();
+      }
+    });
+  }
+
+  // Fechar modal de confirmação de deleção ao clicar fora
+  const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+  if (confirmDeleteModal) {
+    confirmDeleteModal.addEventListener('click', (e) => {
+      if (e.target === confirmDeleteModal) {
+        closeDeleteConfirmModal();
       }
     });
   }
